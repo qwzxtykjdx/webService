@@ -1,0 +1,121 @@
+Web Service
+	————不是框架，更甚至不是一种技术。
+		而是一种跨平台、跨语言的规范、
+
+Web Service集中解决：
+	—— 远程调用
+	—— 跨平台调用
+	—— 跨语言调用
+
+Web Service实际中用途：
+	1.同一个公司的新、旧系统的整合。
+	Linux上的Java应用，去调用Window平台的Delphi应用。
+
+	2.不同公司的业务整合。
+	业务的整合就要带来，不同公司的系统整合。
+	不同公司的系统可能存在平台不同、语言不同的问题。
+
+	3.内容聚合。
+	一个应用需要提供，天气预报、股票行情、黄金行情、编程语言行情……
+	这个内容聚合的应用，需要调用大量不同平台、不通过语言编写的应用的方法。
+
+Axis(Apache) ——> Axis2(Apache)
+XFire ——> CXF（XFire + Celtix）
+
+XFire    (Web Service框架)
+Celtix  （ESB框架）
+
+SOA（面向服务的架构）
+	Service1,Service2,Service3 —— 所有组件都是“即插即用”的。
+
+	IBM提倡的SOA架构：希望以“组装电脑”的方式来开发软件。
+
+	SOA包含：
+	1、各种提供服务的组件。（Web Service）
+	2、企业服务总线（Enterprise Service Bus, ESB）
+
+CXF号称是SOA框架
+
+CXF（Apache）
+	CXF内置了一个Jetty Web服务器
+
+使用CXF开发Web Service服务器端：
+每个Web Service组件需要2个部分：接口和实现类
+（1）开发一个Web Service业务接口。
+	 该接口要用@WebService修饰。
+（2）开发一个Web  Service实现类
+	 实现类也需要用@WebService修饰
+（3）使用Endpoint类的静态publish方法来发布WebService
+
+使用CXF开发Web Service客户端：
+（1）调用CXF提供的wsdl2java工具，根据WSDL文档生成相应的Java代码。
+	 WSDL —— Web Service Definition Language
+	 任何语言实现了Web Service,都需要提供 、并暴露WSDL文档。
+（2）找到wsdl2java所生成类中，一个继承了Service的类。
+	 该类的实例可当成工厂来使用。
+（3）调用Service子类的实例的getxxxPort方法，返回远程Web Service的代理。
+
+形参、返回值
+	1.当形参、返回值的类型是String、基本数据类型时，CXF可以轻松地处理。
+	2.当形参、返回值类型时JavaBean式的复合类、List集合、数组时，CXF也可以很好的处理。
+	3.还有一些像Map、非JavaBean式的复合类，CXF是处理不了的。
+
+在实际的项目中，Web Service组件自己并不会去实现业务功能
+它只是调用业务逻辑组件的方法来暴露Web Service
+
+XML里的两个属性：
+	targetNamespace —— 相当于Java语言里的package
+	xmlns			—— 相当于Java语言里的import
+
+Web Service的三个技术基础：
+	1. WSDL Web Service Definition Language —— Web Service定义语言
+		Web Service接口：
+		 1.type（标准的Schema）
+		 2.2N的message
+		 3.portType —— N个更详细的operation
+		Web Service实现：
+		 1.binding元素 —— N个更详细的operation
+		 2.service 	   —— 指定Web Service的服务器地址
+	2. SOAP Simple Object Access Protocol —— 简单对象访问协议
+	3. UDDI
+
+一次Web Service的调用 ———— 其实并不是方法调用，而是发送SOAP消息（即XML文档片段）
+
+通俗地说，WSDL文档描述了Web Service如下3个方面：
+	- WHAT ： 该Web Service包含“什么”操作
+	- HOW  ： 该Web Service的操作应该“怎样”调用？
+	- WHERE： 该Web Service的服务地址
+只要得到Web Service的WSDL文档，接下来程序就可以调用Web Service
+
+调用一次Web Service的本质：
+1.客户端把调用方法参数，转换生成XML文档片段（SOAP消息，input消息）—— 该文档片段必须符合WSDL定义的格式。
+2.通过网络，把XML文档片段传给服务器。
+3.服务器接收到XML文档片段。
+4.服务器解析XML文档片段，提取其中的数据，并把数据转换成调用Web Service所需要的参数值。
+5.服务器执行方法。
+6.把执行方法得到的返回值，再次转换生成XML文档片段（SOAP消息，output消息）—— 该文档片段必须符合WSDL定义的格式。
+7.通过网络，把XML文档片段传给客户端。
+8.客户端接收到XML文档片段。
+9.客户端解析XML文档片段，提取其中的数据，并把数据转换成调用Web Service的返回值。
+
+从上面调用本质来看，要一个语言支持Web Service，唯一的要求是：该语言支持XML文档解析、生成、支持网络传输
+
+在CXF开发中，如果遇到CXF无法处理的类型，就需要程序员自行处理。
+处理思路：提供一个转化器，该转换器负责把CXF搞不定的类型，转换成CXF搞得定的类型。
+（1）使用@XmlJavaTypeAdapter修饰CXF无法处理的类型，使用该Annotation时，通过value属性指定一个转换器。
+（2）实现自己的转换器。实现转换器时，需要开发一个CXF搞得定的类型。
+
+Web Service如何进行权限控制？
+解决思路是：服务器端要求input消息总是携带有用户名、密码信息。 —— 如果没有用户名、密码信息，直接拒绝调用。
+如果不用CXF等框架，SOAP消息的生成、解析都是由程序员负责的，无论是添加用户名、密码信息，还是提取用户名、密码信息，都可由程序员的代码完成。
+如果用CXF等框架，SOAP消息的生成、解析 都是CXF等框架来完成的。
+
+拦截器
+	为了让程序员能访问、并修改CXF框架所生成的SOAP消息，CXF提供了拦截器。
+
+服务器端添加拦截器
+	（1）获取Endpoint的publish方法返回值。
+	（2）调用该方法的返回值的getInInterceptor、getOutInterceptor方法来获取In、Out拦截器列表，接下来就可以添加拦截器了。
+
+自定义拦截器：
+	需要实现Interceptor接口。实际上，我们一般会继承AbstractPhaseInterceptor
