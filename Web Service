@@ -77,6 +77,12 @@ Web Service的三个技术基础：
 		 1.binding元素 —— N个更详细的operation
 		 2.service 	   —— 指定Web Service的服务器地址
 	2. SOAP Simple Object Access Protocol —— 简单对象访问协议
+		 Header
+		 	Header是可选的，由程序员控制添加
+		 Body
+		 	Body元素总是默认的，Body元素里有两种情况：
+		 	—— 当Web Service交互正确时，Body元素里的内容由WSDL控制。
+		 	—— 当Web Service交互出错时，Body元素的内容将是Fault子元素。
 	3. UDDI
 
 一次Web Service的调用 ———— 其实并不是方法调用，而是发送SOAP消息（即XML文档片段）
@@ -117,5 +123,35 @@ Web Service如何进行权限控制？
 	（1）获取Endpoint的publish方法返回值。
 	（2）调用该方法的返回值的getInInterceptor、getOutInterceptor方法来获取In、Out拦截器列表，接下来就可以添加拦截器了。
 
+客户端添加拦截器
+	（1）调用ClientProxy的getClient方法 ，调用该方法以远程Web Service的代理为参数。
+	（2）调用Client对象的getInInterceptor、getOutInterceptor方法来获取In、Out拦截器列表，接下来就可以添加拦截器了。
+
 自定义拦截器：
 	需要实现Interceptor接口。实际上，我们一般会继承AbstractPhaseInterceptor
+	通过AbstractPhaseInterceptor，可以指定拦截器在哪个阶段起作用
+	使用super显式调用父类有参数的构造器，添加拦截情况的常量
+	显式调用父类构造器，程序将不会隐式调用父类无参数的构造器
+	实现自己的拦截器，需要实现handleMessage方法
+	handleMessage方法中的形参就是被拦截到的SOAP消息，一旦程序获取了SOAP消息，剩下的事情就是解析SOAP消息，或修改SOAP消息。
+
+CXF与spring的整合
+	可以在传统的Java EE应用的基础上添加一层Web Service层，我们的Java EE应用就可以对外暴露成Web Service，这样就允许任何平台、任何语言编写的程序来调用这个Java EE应用。
+
+在传统ssh项目基础上增加Web Service的步骤：
+（1）添加CXF的JAR包。（最核心的6个）；
+（2）在web.xml配置CXF的核心控制器：CXFServlet；
+（3）在Spring配置文件中导入CXF提供Schema，XML配置；
+（4）在Spring配置文件中使用jaxws:endpoint元素来暴露Web Service。
+（5）如果要添加拦截器，在jaxws:endpoint元素里添加inInterceptor、outInterceptor子元素
+
+CXF与Spring另一种整合
+（1）让Action依赖远程Web Service的接口
+（2）添加CXF的JAR包。（最核心的6个）；
+（3）在Spring配置文件中导入CXF提供Schema，XML配置；
+（4）在Spring配置文件中使用jaxws:endpoint元素来暴露Web Service。
+（5）如果要添加拦截器，在jaxws:endpoint元素里添加inInterceptor、outInterceptor子元素
+
+implementor指定WebService的服务提供者。支持两种形式：
+A.直接给定服务提供者的类名
+B.设置为容器的一个Bean，要在Bean的id前加上#
